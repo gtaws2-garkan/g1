@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <title>GLTF</title>
+  <style>
+  body {
+    margin: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  #re{
+    position: fixed;
+    width: 260px;
+    height: 500px;
+    left: calc(50% - 150px);
+    top: calc(50% - 250px);
+    box-shadow: 0 0 30px 2px white;
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    border-radius: 20px;
+  }
+  .container {
+    position: fixed;
+    margin: 0 auto;
+    z-index: -10;
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+    width: 100vw;
+    height: 100vh;
+  }
+  .output_canvas{
+    width: 100vw;
+    height: 100vh;
+  }
+  .load{
+    position:fixed;
+    width:200px;
+    left:10px;
+    display:none;
+  }
+  #luz{
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    overflow: auto;
+    z-index: -40;
+    text-align: center;
+  }
+  .h1{
+    color: white;
+font-size: 30px;
+width: 300px;
+background: linear-gradient(90deg, #0070ff 0%, #0070ff 0%, #25008a 0%, #25008a 100%);
+margin-left: 5%;
+border-radius: 40px;
+box-shadow: 0px 0px 30px 1px #93d6ff inset;
+font-family: sans-serif;
+margin-bottom: 40px;
+padding: 10px 0;
+  }
+  .h1:last-of-type{
+    margin-bottom: 100px;
+  }
+  #image{
+position: fixed;
+left: calc(300px + 20%);
+z-index: -40;
+height: 500px;
+top: calc(50% - 250px);
+text-align: center;
+  }
+  #img{
+height: 100%;
+box-shadow: 0 0px 200px 5px #3d6fbd;
+border-radius: 20px;
+  }
+  h3{
+    color: white;
+  }
+  </style>
+</head>
+<body>
+  <div id="luz">
+    <h1 class="h1">Bronzino</h1>
+    <h1 class="h1">Jean Siméon Chardi</h1>
+    <h1 class="h1">Lucas Cranach</h1>
+    <h1 class="h1">Titian</h1>
+    <h1 class="h1">Odilon Redon</h1>
+    <h1 class="h1">Albert Pinkham</h1>
+    <h1 class="h1">Goya</h1>
+    <h1 class="h1">Rembrandt</h1>
+    <h1 class="h1">Gustave Courbet</h1>
+    <h1 class="h1">Buoninsegna</h1>
+    <h1 class="h1">Emanuel Leutze</h1>
+    <h1 class="h1">Paul Gauguin</h1>
+    <h1 class="h1">Georges Seurat</h1>
+    <h1 class="h1">Gustav Klimt</h1>
+    <h1 class="h1">Edouard Manet</h1>
+  </div>
+  <div id="image">
+    <img id="img" src="./img/0.jpg">
+    <h3 id="description">Hello</h3>
+  </div>
+  <div id="re">
+    <img src="./479.gif">
+    <h3>loading..</h3>
+  </div>
+  <img src = "./3.gif" class="load" id="loading">
+  <img src = "./circle.png" class="load" id="loading2">
+  <div class="container">
+    <video class="input_video" style="display:none;"></video>
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+  </div>
+  <script src="./js/data.js"></script>
+  <script>
+    const videoElement = document.getElementsByClassName('input_video')[0];
+    const canvasElement = document.getElementsByClassName('output_canvas')[0];
+    const canvasCtx = canvasElement.getContext('2d');
+    var canvasWidth = canvasElement.width;
+    var canvasHeight = canvasElement.height;
+    var pixelRatio = window.devicePixelRatio;
+    var sign1=document.getElementById("loading");
+    var sign2 = document.getElementById("loading2");
+    var sign=document.getElementsByClassName("load");
+    var innerW = window.innerWidth;
+    var innerH = window.innerHeight;
+    var longA;
+    var scrollA="exit";
+    var scrollpixel=0;
+    var luz=document.getElementById("luz");
+    var h1=document.getElementsByClassName("h1");
+    var h1Length=[];
+    var touch=0;
+    for(var zs=0;zs<h1.length;zs++){
+      h1Length.push([[h1[zs].offsetTop], [h1[zs].offsetLeft], [h1[zs].offsetHeight+h1[zs].offsetTop], [h1[zs].offsetWidth+h1[zs].offsetLeft]]);
+    }
+    console.log(object1);
+    function onResults(results) {
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      //canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        if (results.multiHandLandmarks) {
+          for (const landmarks of results.multiHandLandmarks) {
+            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+              {color: '#7a7a7a', lineWidth: 5});
+              drawLandmarks(canvasCtx, landmarks, {color: '#c2c2c2', lineWidth: 2});
+              function find_fourAngle(A,B,C,D){
+                //var fourA=Math.acos(((A.x-B.x)*(C.x-D.x)+(A.y-B.y)*(C.y-D.y))/(Math.sqrt((A.x-B.x)**2+(C.x-D.x)**2) * Math.sqrt((A.y-B.y)**2+(C.y-D.y)**2)))
+                //var fourA=Math.acos(Math.cos(((A.x-B.x)*(C.x-D.x)+(A.y-B.y)*(C.y-D.y))/(Math.sqrt((A.x-B.x)**2+(C.x-D.x)**2) * Math.sqrt((A.y-B.y)**2+(C.y-D.y)**2))))
+                var m1=(A.y-B.y)/(A.x-B.x)
+                var m2=(C.y-D.y)/(C.x-D.x)
+                return Math.atan((m2-m1)/(1+m2*m1));
+              }
+              var parallelL=find_fourAngle(landmarks[8],landmarks[5],landmarks[20],landmarks[17]);
+              function find_shortAngle(A,B,C) {
+                var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));
+                var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2));
+                var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
+                return Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+              }
+              var longL=find_shortAngle(landmarks[12],landmarks[9],landmarks[0]) / Math.PI
+              var shortL=find_shortAngle(landmarks[8],landmarks[5],landmarks[0]) / Math.PI
+              if(parallelL>-0.2 && longL>0.7){
+                if(scrollA=="exit"){
+                  scrollA=luz.pageYOffset;
+                  longA=landmarks[12].z
+                }else{
+                  var angA=longA-landmarks[12].z
+                  if(angA>0){
+                    scrollpixel=scrollpixel+10;
+                  }else{
+                    scrollpixel=scrollpixel-10;
+                  }
+                  if(scrollpixel<0){
+                    scrollpixel=0;
+                  }else if(scrollpixel>=720){
+                    scrollpixel=720;
+                  }else{
+                    luz.scroll({
+                      top: scrollpixel,
+                    });
+                  }
+                }
+              }else{
+                zero();
+              }
+              if(longL<0.2 && shortL>0.8){
+                var yl=scrollpixel+landmarks[8].y*innerH;
+                var xl=(1-landmarks[8].x)*innerW
+                //console.log(yl);
+                
+                for(var d=0; d<h1Length.length;d++){
+                  if(h1Length[d][0]<yl && yl<h1Length[d][2] && h1Length[d][1]<xl && xl<h1Length[d][3]){
+                    document.getElementById("img").src="./img/"+d+".jpg";
+                    var destext="object"+(d+1);
+                    document.getElementById("description").innerHTML=eval(destext).name;
+                    if(touch!=d){
+                      h1[touch].style.background="linear-gradient(90deg, #25008a 0%, #25008a 100%)";
+                      touch=d;
+                    }else{
+                      h1[d].style.background="linear-gradient(90deg, #0070ff 0%, #0070ff 100%)";
+                    }
+                    console.log(d);
+                    
+                  }
+                }
+              }
+            }
+          }else{
+            zero();
+          }
+          canvasCtx.restore();
+          document.getElementById("re").style.display = 'none';
+        }
+        function zero(){
+          sign1.style.display="none";
+          sign2.style.display="none";
+          scrollA="exit";
+        }
+        
+        const hands = new Hands({locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+        hands.setOptions({
+          maxNumHands: 2,
+          minDetectionConfidence: 0.8,
+          minTrackingConfidence: 0.8
+        });
+        hands.onResults(onResults);
+
+        const cameraW = new Camera(videoElement, {
+          onFrame: async () => {
+            await hands.send({image: videoElement});
+          },
+          width: 1280,
+          height: 720
+        });
+        cameraW.start();
+        
+
+      </script>
+    </body>
+    </html>
